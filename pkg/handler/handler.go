@@ -6,11 +6,12 @@ import (
 	"sync"
 
 	"github.com/Priyanka488/log-stream-processor/config"
+	"github.com/Priyanka488/log-stream-processor/pkg/filter"
 	"github.com/Priyanka488/log-stream-processor/pkg/models"
+	"github.com/Priyanka488/log-stream-processor/pkg/processor"
 )
 
 func processEvent(i int, ch chan models.Event, wg *sync.WaitGroup, ctx context.Context) {
-
 	defer wg.Done()
 	defer fmt.Println("Handler ", i, " is done")
 
@@ -24,13 +25,15 @@ func processEvent(i int, ch chan models.Event, wg *sync.WaitGroup, ctx context.C
 				fmt.Println("Channel closed")
 				return
 			}
-			fmt.Printf("Handler %d: %v\n", i, event)
-			// process event
-			
-			// filter event
+			processedEvent := processor.ProcessEvent(event)
+			// Example filter: Only process INFO severity events.
+			filter := filter.SeverityFilter("INFO")
+			if filter(processedEvent) {
+				fmt.Printf("Handler %d: %v\n", i, processedEvent)
+				// Here you would forward the event to the egress layer.
+			}
 		}
 	}
-
 }
 
 func Init(ch chan models.Event, wg *sync.WaitGroup, ctx context.Context) {

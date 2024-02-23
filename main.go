@@ -9,7 +9,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Priyanka488/log-stream-processor/pkg/handler"
 	"github.com/Priyanka488/log-stream-processor/pkg/models"
 )
 
@@ -35,7 +34,7 @@ func listenForCancel(cancel context.CancelFunc, wg *sync.WaitGroup) {
 func main() {
 	ch := make(chan models.Event, 100)
 	var wg sync.WaitGroup
-]
+
 	ctx, cancel := context.WithCancel(context.Background())
 	wg.Add(1)
 	go listenForCancel(cancel, &wg)
