@@ -8,6 +8,13 @@ import (
 func ProcessEvent(event models.Event) models.Event {
 	// Example: Adding a timestamp or modifying the event's body.
 	// This is a placeholder for your processing logic.
+
+	if event != nil {
+		if systemLog, ok := event.(*models.SystemLog); ok {
+			systemLog.Log.SetTimeCreated()
+		}
+	}
+
 	switch e := event.(type) {
 	case models.SystemLog:
 		e.Body += " - Processed"
