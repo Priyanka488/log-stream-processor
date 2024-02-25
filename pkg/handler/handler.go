@@ -24,9 +24,9 @@ func processEvent(i int, ch chan models.Event, wg *sync.WaitGroup, ctx context.C
 				fmt.Println("Channel closed")
 				return
 			}
-			fmt.Printf("Handler %d: %v\n", i, event)
+			event.Display()
 			// process event
-			
+
 			// filter event
 		}
 	}

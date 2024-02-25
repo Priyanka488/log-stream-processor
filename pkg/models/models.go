@@ -1,7 +1,9 @@
 package models
 
+import "fmt"
+
 type Event interface {
-	display()
+	Display()
 }
 
 // Base struct
@@ -17,29 +19,9 @@ type SystemLog struct {
 }
 
 // implement display method for SystemLog
-func (s SystemLog) display() {
-	println(s.ID, s.Source, s.Body)
+func (s SystemLog) Display() {
+	fmt.Println("ID: ", s.Log.ID)
+	fmt.Println("Source: ", s.Log.Source)
+	fmt.Println("Body: ", s.Log.Body)
+	fmt.Println("Severity: ", s.Severity)
 }
-
-// func main() {
-
-// 	var events []Event
-
-// 	slog := SystemLog{
-// 		Log:      Log{ID: 1, Source: "System", Body: "System is running"},
-// 		Severity: "INFO",
-// 	}
-
-// 	events = append(events, slog)
-
-// 	slog = SystemLog{
-// 		Log{2, "System", "System is running"},
-// 		"ERROR",
-// 	}
-// 	events = append(events, slog)
-
-// 	for _, event := range events {
-// 		event.display()
-// 	}
-
-// }

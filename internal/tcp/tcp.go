@@ -4,14 +4,17 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 
 	"github.com/Priyanka488/log-stream-processor/config"
+	"github.com/Priyanka488/log-stream-processor/pkg/models"
+	"github.com/Priyanka488/log-stream-processor/pkg/processor"
 )
 
 // 5. Add Context Cancellation to TCP Server
 
-func Init(wg *sync.WaitGroup, ctx context.Context) {
+func Init(wg *sync.WaitGroup, ctx context.Context, ch chan models.Event) {
 
 	defer wg.Done()
 
@@ -33,7 +36,7 @@ func Init(wg *sync.WaitGroup, ctx context.Context) {
 				return
 			}
 			wg_tcp.Add(1)
-			go handleRequest(conn, &wg_tcp, ctx)
+			go handleRequest(conn, &wg_tcp, ctx, ch)
 		}
 	}()
 
@@ -47,23 +50,35 @@ func Init(wg *sync.WaitGroup, ctx context.Context) {
 }
 
 // 4. keep listening on the same connection
-func handleRequest(conn net.Conn, wg *sync.WaitGroup, ctx context.Context) {
+func handleRequest(conn net.Conn, wg *sync.WaitGroup, ctx context.Context, ch chan models.Event) {
 	defer wg.Done()
 	fmt.Println("New connection")
-	go func() {
+	connect_ch := make(chan bool)
+	go func(connect_ch chan bool) {
 		for {
 			chunk := make([]byte, config.TCP_MESSAGE_SIZE)
 			readBytes, err := conn.Read(chunk)
 			if err != nil {
 				fmt.Println("Error reading:", err.Error())
+				connect_ch <- true
 				return
 			}
-			fmt.Printf("Received data: %v", string(chunk[:readBytes]))
+			// 6. Send data to handler
+			data_str := string(chunk[:readBytes])
+			// trim null characters
+			data_str = strings.TrimSpace(data_str)
+			ch <- processor.ProcessStringToEvent(data_str)
+			fmt.Printf("Received data: %v", data_str)
 		}
-	}()
+	}(connect_ch)
 
-	<-ctx.Done()
-	fmt.Println("Closing connection, context cancelled")
+	select {
+	case <-connect_ch:
+		fmt.Println("Closing connection, client disconnected")
+	case <-ctx.Done():
+		fmt.Println("Closing connection, context cancelled")
+	}
+
 	if err := conn.Close(); err != nil {
 		fmt.Println("Error closing connection:", err.Error())
 	}
