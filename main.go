@@ -27,14 +27,10 @@ func simulateIngress(ch chan models.Event) {
 func listenForCancel(cancel context.CancelFunc, wg *sync.WaitGroup, ch chan models.Event) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	select {
-	case <-c:
-		fmt.Println("Received signal to cancel")
-		cancel()
-	case <-ch:
-		fmt.Println("Channel closed")
-		cancel()
-	}
+	<-c
+	fmt.Println("Received signal to cancel")
+	cancel()
+
 	defer wg.Done()
 }
 
@@ -46,7 +42,7 @@ func main() {
 	handler.Init(ch, &wg, ctx)
 	wg.Add(2)
 	go listenForCancel(cancel, &wg, ch)
-	go tcp.Init(&wg)
+	go tcp.Init(&wg, ctx)
 
 	simulateIngress(ch)
 	close(ch)

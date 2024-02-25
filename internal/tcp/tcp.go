@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"sync"
@@ -8,7 +9,9 @@ import (
 	"github.com/Priyanka488/log-stream-processor/config"
 )
 
-func Init(wg *sync.WaitGroup) {
+// 5. Add Context Cancellation to TCP Server
+
+func Init(wg *sync.WaitGroup, ctx context.Context) {
 
 	defer wg.Done()
 
@@ -21,29 +24,47 @@ func Init(wg *sync.WaitGroup) {
 	}
 
 	// 3. keep listening for new connections
-	for {
+	go func() {
 		// 2. start accepting connections
-		conn, err := listener.Accept()
-		if err != nil {
-			fmt.Println("Error accepting:", err.Error())
-			return
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				fmt.Println("Error accepting:", err.Error())
+				return
+			}
+			wg_tcp.Add(1)
+			go handleRequest(conn, &wg_tcp, ctx)
 		}
-		wg_tcp.Add(1)
-		go handleRequest(conn, &wg_tcp)
-	}
+	}()
 
+	<-ctx.Done()
+	fmt.Println("Closing TCP server, context cancelled")
+	if err := listener.Close(); err != nil {
+		fmt.Println("Error closing listener:", err.Error())
+	}
+	wg_tcp.Wait()
+	fmt.Println("TCP server closed")
 }
 
 // 4. keep listening on the same connection
-func handleRequest(conn net.Conn, wg *sync.WaitGroup) {
+func handleRequest(conn net.Conn, wg *sync.WaitGroup, ctx context.Context) {
 	defer wg.Done()
-	for {
-		chunk := make([]byte, config.TCP_MESSAGE_SIZE)
-		readBytes, err := conn.Read(chunk)
-		if err != nil {
-			fmt.Println("Error reading:", err.Error())
-			return
+	fmt.Println("New connection")
+	go func() {
+		for {
+			chunk := make([]byte, config.TCP_MESSAGE_SIZE)
+			readBytes, err := conn.Read(chunk)
+			if err != nil {
+				fmt.Println("Error reading:", err.Error())
+				return
+			}
+			fmt.Printf("Received data: %v", string(chunk[:readBytes]))
 		}
-		fmt.Printf("Received data: %v", string(chunk[:readBytes]))
+	}()
+
+	<-ctx.Done()
+	fmt.Println("Closing connection, context cancelled")
+	if err := conn.Close(); err != nil {
+		fmt.Println("Error closing connection:", err.Error())
 	}
 }
