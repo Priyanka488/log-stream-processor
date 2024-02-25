@@ -9,10 +9,8 @@ import (
 	"syscall"
 	"time"
 
-<<<<<<< Updated upstream
-=======
+
 	"github.com/Priyanka488/log-stream-processor/internal/tcp"
->>>>>>> Stashed changes
 	"github.com/Priyanka488/log-stream-processor/pkg/handler"
 	"github.com/Priyanka488/log-stream-processor/pkg/models"
 )
