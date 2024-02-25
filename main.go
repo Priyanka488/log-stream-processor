@@ -9,10 +9,7 @@ import (
 	"syscall"
 	"time"
 
-<<<<<<< Updated upstream
-=======
 	"github.com/Priyanka488/log-stream-processor/internal/tcp"
->>>>>>> Stashed changes
 	"github.com/Priyanka488/log-stream-processor/pkg/handler"
 	"github.com/Priyanka488/log-stream-processor/pkg/models"
 )
@@ -44,7 +41,7 @@ func listenForCancel(cancel context.CancelFunc, wg *sync.WaitGroup, ch chan mode
 func main() {
 	ch := make(chan models.Event, 100)
 	var wg sync.WaitGroup
-]
+
 	ctx, cancel := context.WithCancel(context.Background())
 	handler.Init(ch, &wg, ctx)
 	wg.Add(2)

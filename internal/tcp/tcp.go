@@ -19,18 +19,20 @@ func Init(wg *sync.WaitGroup) {
 		return
 	}
 
-	// 2. start accepting connections
-	conn, err := listener.Accept()
-	if err != nil {
-		fmt.Println("Error accepting:", err.Error())
-		return
+	// 3. keep listening for new connections
+	for {
+		// 2. start accepting connections
+		conn, err := listener.Accept()
+		if err != nil {
+			fmt.Println("Error accepting:", err.Error())
+			return
+		}
+		chunk := make([]byte, config.TCP_MESSAGE_SIZE)
+		readBytes, err := conn.Read(chunk)
+		if err != nil {
+			fmt.Println("Error reading:", err.Error())
+			return
+		}
+		fmt.Printf("Received data: %v", string(chunk[:readBytes]))
 	}
-	chunk := make([]byte, config.TCP_MESSAGE_SIZE)
-	readBytes, err := conn.Read(chunk)
-	if err != nil {
-		fmt.Println("Error reading:", err.Error())
-		return
-	}
-
-	fmt.Printf("Received data: %v", string(chunk[:readBytes]))
 }
