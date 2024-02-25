@@ -9,12 +9,16 @@ import (
 	"syscall"
 	"time"
 
+<<<<<<< Updated upstream
+=======
+	"github.com/Priyanka488/log-stream-processor/internal/tcp"
+>>>>>>> Stashed changes
 	"github.com/Priyanka488/log-stream-processor/pkg/handler"
 	"github.com/Priyanka488/log-stream-processor/pkg/models"
 )
 
 func simulateIngress(ch chan models.Event) {
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 5; i++ {
 		ch <- models.SystemLog{
 			Log:      models.Log{ID: i, Source: "App", Body: "System is running"},
 			Severity: "INFO",
@@ -23,13 +27,18 @@ func simulateIngress(ch chan models.Event) {
 	}
 }
 
-func listenForCancel(cancel context.CancelFunc, wg *sync.WaitGroup) {
+func listenForCancel(cancel context.CancelFunc, wg *sync.WaitGroup, ch chan models.Event) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	<-c
-	fmt.Println("Received signal to cancel")
-	cancel()
-	wg.Done()
+	select {
+	case <-c:
+		fmt.Println("Received signal to cancel")
+		cancel()
+	case <-ch:
+		fmt.Println("Channel closed")
+		cancel()
+	}
+	defer wg.Done()
 }
 
 func main() {
@@ -37,8 +46,10 @@ func main() {
 	var wg sync.WaitGroup
 ]
 	ctx, cancel := context.WithCancel(context.Background())
-	wg.Add(1)
-	go listenForCancel(cancel, &wg)
+	handler.Init(ch, &wg, ctx)
+	wg.Add(2)
+	go listenForCancel(cancel, &wg, ch)
+	go tcp.Init(&wg)
 
 	simulateIngress(ch)
 	close(ch)
